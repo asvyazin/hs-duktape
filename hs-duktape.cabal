@@ -1,0 +1,26 @@
+name:                hs-duktape
+version:             0.1.0.0
+synopsis:            Haskell bindings for a very compact embedded ECMAScript (JavaScript) engine.
+description:         There is another (different) version of duktape bindings at https://github.com/myfreeweb/hs-duktape.
+license:             MIT
+license-file:        LICENSE
+author:              Alexander Svyazin
+maintainer:          guybrush@live.ru
+-- copyright:           
+category:            Web
+build-type:          Simple
+-- extra-source-files:  
+cabal-version:       >=1.10
+
+library
+  exposed-modules:     Scripting.Duktape
+  -- other-modules:       
+  -- other-extensions:    
+  build-depends:       base >=4.8 && <4.9
+  hs-source-dirs:      src
+  default-language:    Haskell2010
+  build-tools:         c2hs -any
+  include-dirs:        duktape/src
+  C-sources:           duktape/src/duktape.c
+  CC-options:          -Wall -pedantic -Wno-long-long
+  GHC-options:         -Wall
