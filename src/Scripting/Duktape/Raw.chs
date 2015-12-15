@@ -2,9 +2,10 @@
 module Scripting.Duktape.Raw where
 
 
+import Control.Monad
 import Data.Bits
 import Data.List
-import Foreign
+import Foreign hiding (void)
 import Foreign.C.String
 import Foreign.C.Types
 
@@ -721,22 +722,47 @@ dukCompileStrlen :: DukCompileFlags
 dukCompileStrlen = DukCompileFlags 64
 
 
-{#fun duk_eval_raw {`CDukContext', withCStringLenCSize* `String'&, unDukCompileFlags `DukCompileFlags'} -> `Int'#}
+{#fun duk_eval_raw as ^ {`CDukContext', withCStringLenCSize* `String'&, unDukCompileFlags `DukCompileFlags'} -> `Int'#}
 
 
-{#fun duk_compile_raw {`CDukContext', withCStringLenCSize* `String'&, unDukCompileFlags `DukCompileFlags'} -> `Int'#}
+nullPtrMod :: (CString -> IO a) -> IO a
+nullPtrMod f = f nullPtr
 
 
-{#fun duk_dump_function {`CDukContext'} -> `()'#}
+zeroSize :: (CSize -> IO a) -> IO a
+zeroSize f = f $ fromIntegral 0
 
 
-{#fun duk_load_function {`CDukContext'} -> `()'#}
+{#fun duk_eval_raw as dukEvalRawNullStr {`CDukContext', nullPtrMod- `()', zeroSize- `()', unDukCompileFlags `DukCompileFlags'} -> `Int'#}
+
+
+dukEvalFileNoResult :: CDukContext -> FilePath -> IO ()
+dukEvalFileNoResult ctx filename = do
+  void $ dukPushStringFileRaw ctx filename 0
+  void $ dukPushString ctx filename
+  void $ dukEvalRawNullStr ctx $ combineDukCompileFlags [dukCompileEval, dukCompileNoResult]
+
+
+dukPEvalFileNoResult :: CDukContext -> FilePath -> IO Int
+dukPEvalFileNoResult ctx filename = do
+  void $ dukPushStringFileRaw ctx filename 0
+  void $ dukPushString ctx filename
+  dukEvalRawNullStr ctx $ combineDukCompileFlags [dukCompileEval, dukCompileNoResult, dukCompileSafe]
+
+
+{#fun duk_compile_raw as ^ {`CDukContext', withCStringLenCSize* `String'&, unDukCompileFlags `DukCompileFlags'} -> `Int'#}
+
+
+{#fun duk_dump_function as ^ {`CDukContext'} -> `()'#}
+
+
+{#fun duk_load_function as ^ {`CDukContext'} -> `()'#}
 
 
 -- duk_log
 
 
-{#fun duk_push_context_dump {`CDukContext'} -> `()'#}
+{#fun duk_push_context_dump as ^ {`CDukContext'} -> `()'#}
 
 
 -- duk_debugger_attach
