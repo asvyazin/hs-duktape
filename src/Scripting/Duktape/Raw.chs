@@ -743,11 +743,25 @@ dukEvalFileNoResult ctx filename = do
   void $ dukEvalRawNullStr ctx $ combineDukCompileFlags [dukCompileEval, dukCompileNoResult]
 
 
+dukEvalFile :: CDukContext -> FilePath -> IO ()
+dukEvalFile ctx filename = do
+  void $ dukPushStringFileRaw ctx filename 0
+  void $ dukPushString ctx filename
+  void $ dukEvalRawNullStr ctx dukCompileEval
+
+
 dukPEvalFileNoResult :: CDukContext -> FilePath -> IO Int
 dukPEvalFileNoResult ctx filename = do
   void $ dukPushStringFileRaw ctx filename 0
   void $ dukPushString ctx filename
   dukEvalRawNullStr ctx $ combineDukCompileFlags [dukCompileEval, dukCompileNoResult, dukCompileSafe]
+
+
+dukPEvalFile :: CDukContext -> FilePath -> IO Int
+dukPEvalFile ctx filename = do
+  void $ dukPushStringFileRaw ctx filename 0
+  void $ dukPushString ctx filename
+  dukEvalRawNullStr ctx $ combineDukCompileFlags [dukCompileEval, dukCompileSafe]
 
 
 {#fun duk_compile_raw as ^ {`CDukContext', withCStringLenCSize* `String'&, unDukCompileFlags `DukCompileFlags'} -> `Int'#}
