@@ -376,6 +376,12 @@ combineDukTypeMask = DukTypeMask . foldl1' (.|.) . map unDukTypeMask
 {#fun duk_get_error_code as ^ {`CDukContext', `Int'} -> `Int'#}
 
 
+dukIsError :: CDukContext -> Int -> IO Bool
+dukIsError ctx idx = do
+  err <- dukGetErrorCode ctx idx
+  return $ err /= 0
+
+
 {#fun duk_get_boolean as ^ {`CDukContext', `Int'} -> `Bool'#}
 
 
