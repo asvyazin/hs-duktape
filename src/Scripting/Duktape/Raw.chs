@@ -38,6 +38,10 @@ type CDukFatalFunction =
   Ptr CDukContext -> Int -> CString -> IO ()
 
 
+foreign import ccall "wrapper"
+  mkCDukFatalFunction :: CDukFatalFunction -> IO (FunPtr CDukFatalFunction)
+
+
 {#fun duk_create_heap as ^ { id `FunPtr CDukAllocFunction'
                            , id `FunPtr CDukReallocFunction'
                            , id `FunPtr CDukFreeFunction'
@@ -48,6 +52,12 @@ type CDukFatalFunction =
 dukCreateHeapDefault :: IO CDukContext
 dukCreateHeapDefault =
   dukCreateHeap nullFunPtr nullFunPtr nullFunPtr nullPtr nullFunPtr
+
+
+dukCreateHeapWithFatal :: CDukFatalFunction -> IO CDukContext
+dukCreateHeapWithFatal fatalFunc = do
+  wrappedFunc <- mkCDukFatalFunction fatalFunc
+  dukCreateHeap nullFunPtr nullFunPtr nullFunPtr nullPtr wrappedFunc
 
 
 {#fun duk_throw as ^ {`CDukContext'} -> `()'#}
@@ -382,6 +392,12 @@ dukIsError ctx idx = do
   return $ err /= 0
 
 
+dukIsError'_ :: Ptr CDukContext -> Int -> IO Bool
+dukIsError'_ ctx idx = do
+  err <- dukGetErrorCode'_ ctx idx
+  return $ err /= 0
+
+
 {#fun duk_get_boolean as ^ {`CDukContext', `Int'} -> `Bool'#}
 
 
@@ -690,7 +706,21 @@ dukSafeToLString ctx idx = do
 {#fun duk_new as ^ {`CDukContext', `Int'} -> `()'#}
 
 
--- duk_safe_call
+type CDukSafeCallFunction =
+  Ptr CDukContext -> IO CInt
+
+
+foreign import ccall "wrapper"
+  mkCDukSafeCallFunction :: CDukSafeCallFunction -> IO (FunPtr CDukSafeCallFunction)
+
+
+{#fun duk_safe_call as dukSafeCallRaw {`CDukContext', id `FunPtr CDukSafeCallFunction', `Int', `Int'} -> `Int'#}
+
+
+dukSafeCall :: CDukContext -> Int -> Int -> CDukSafeCallFunction -> IO Int
+dukSafeCall ctx nargs nrets unsafeCode = do
+  funcPtr <- mkCDukSafeCallFunction unsafeCode
+  dukSafeCallRaw ctx funcPtr nargs nrets
 
 
 newtype DukCompileFlags = DukCompileFlags { unDukCompileFlags :: CUInt }
@@ -775,6 +805,15 @@ debugContext ctx = do
   dukPushContextDump ctx
   str <- dukGetString ctx (-1)
   dukPop ctx
+  putStrLn str
+
+
+debugContext'_ :: Ptr CDukContext -> IO ()
+debugContext'_ ctx = do
+  dukPushContextDump'_ ctx
+  cstr <- dukGetString'_ ctx (-1)
+  dukPop'_ ctx
+  str <- peekCString cstr
   putStrLn str
 
 
