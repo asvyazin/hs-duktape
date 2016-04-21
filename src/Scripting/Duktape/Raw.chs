@@ -371,9 +371,6 @@ combineDukTypeMask = DukTypeMask . foldl1' (.|.) . map unDukTypeMask
 {#fun duk_is_thread as ^ {`CDukContext', `Int'} -> `Bool'#}
 
 
-{#fun duk_is_callable as ^ {`CDukContext', `Int'} -> `Bool'#}
-
-
 {#fun duk_is_dynamic_buffer as ^ {`CDukContext', `Int'} -> `Bool'#}
 
 
